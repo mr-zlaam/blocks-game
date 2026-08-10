@@ -17,8 +17,8 @@ export default function PieceTray() {
         Drag a piece to the board
       </Text>
       <View
-        className="flex-row gap-3 bg-surface rounded-game-lg p-2"
-        style={{ overflow: "visible" }}
+        className="flex-row gap-3 bg-surface rounded-game-lg p-2 items-center"
+        style={{ overflow: "visible", height: 120 }}
       >
         {state.pieces.map((piece, index) => (
           <DraggablePiece

@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { gameReducer, INITIAL_STATE } from "./gameReducer";
+import { loadHighScore, saveHighScore } from "@/lib/storage";
 
 import type { GameState, GameAction, BlockColor } from "@/lib/game";
 
@@ -50,11 +51,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setHoverStateRaw(hover);
   }, []);
 
+  // Load persisted high score on mount
+  useEffect(() => {
+    void loadHighScore().then((saved) => {
+      if (saved > 0) {
+        dispatch({ type: "RESTORE_HIGH_SCORE", highScore: saved });
+      }
+    });
+  }, []);
+
+  // Start game after mount
   useEffect(() => {
     if (state.pieces.length === 0) {
       dispatch({ type: "START_GAME" });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist high score whenever it changes
+  useEffect(() => {
+    if (state.highScore > 0) {
+      void saveHighScore(state.highScore);
+    }
+  }, [state.highScore]);
 
   return (
     <GameContext.Provider

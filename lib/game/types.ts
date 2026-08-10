@@ -69,4 +69,5 @@ export type GameAction =
   | { type: "START_GAME" }
   | { type: "SELECT_PIECE"; index: number }
   | { type: "PLACE_PIECE"; row: number; col: number; pieceIndex: number }
+  | { type: "RESTORE_HIGH_SCORE"; highScore: number }
   | { type: "NEW_GAME" };

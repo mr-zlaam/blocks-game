@@ -54,6 +54,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "PLACE_PIECE":
       return handlePlacePiece(state, action.row, action.col, action.pieceIndex);
 
+    case "RESTORE_HIGH_SCORE":
+      return { ...state, highScore: Math.max(state.highScore, action.highScore) };
+
     default:
       return state;
   }
