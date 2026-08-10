@@ -10,7 +10,6 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 
 import { BlockShape } from "@/components/game/BlockShape";
-import { SPRING_BOUNCE } from "@/lib/animations";
 import { GRID_SIZE, canPlaceShape } from "@/lib/game";
 import { useGame } from "@/contexts/GameContext";
 
@@ -20,7 +19,10 @@ import type { GamePiece } from "@/lib/game";
 const TRAY_CELL_SIZE = 22;
 
 /** Y offset — piece floats above finger so you can see it. */
-const FINGER_OFFSET_Y = -50;
+const FINGER_OFFSET_Y = -250;
+
+/** Smooth snap-back spring (no bounce). */
+const SPRING_SNAP = { damping: 30, stiffness: 400 };
 
 interface DraggablePieceProps {
   piece: GamePiece;
@@ -36,8 +38,9 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
   const isDragging = useSharedValue(false);
   const scaleTarget = useSharedValue(1.8);
   const lastHoverRef = useRef<string>("");
+  const pieceViewRef = useRef<View>(null);
+  const offsetRef = useRef({ x: 0, y: 0 });
 
-  // Compute exact scale to match board cell size (in useEffect, not render)
   useEffect(() => {
     const layout = boardLayoutRef.current;
     if (layout) {
@@ -49,27 +52,54 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     lastHoverRef.current = "";
   }, [piece.isPlaced]);
 
-  const handleMove = useCallback(
+  /** Measure piece center vs finger start to get correction offset. */
+  const handleDragStart = useCallback(
+    (fingerX: number, fingerY: number) => {
+      pieceViewRef.current?.measureInWindow((px, py, pw, ph) => {
+        offsetRef.current = {
+          x: px + pw / 2 - fingerX,
+          y: py + ph / 2 - fingerY,
+        };
+      });
+    },
+    [],
+  );
+
+  /** Compute grid position from piece's ACTUAL visual center (not finger). */
+  const toGridPos = useCallback(
     (absX: number, absY: number) => {
       const layout = boardLayoutRef.current;
-      if (!layout) return;
+      if (!layout) return null;
 
       const step = layout.cellSize + layout.cellGap;
-      // Center the shape on the finger, not anchor to top-left
       const shapeH = piece.shape.grid.length;
       const shapeW = piece.shape.grid[0]?.length ?? 1;
-      const col = Math.floor((absX - layout.x) / step - shapeW / 2 + 0.5);
-      const row = Math.floor((absY + FINGER_OFFSET_Y - layout.y) / step - shapeH / 2 + 0.5);
-      const key = `${row},${col}`;
 
+      // Piece visual center = finger + offset correction + finger offset
+      const pieceCX = absX + offsetRef.current.x;
+      const pieceCY = absY + offsetRef.current.y + FINGER_OFFSET_Y;
+
+      const col = Math.round((pieceCX - layout.x) / step - shapeW / 2);
+      const row = Math.round((pieceCY - layout.y) / step - shapeH / 2);
+
+      return { row, col };
+    },
+    [boardLayoutRef, piece.shape],
+  );
+
+  const handleMove = useCallback(
+    (absX: number, absY: number) => {
+      const pos = toGridPos(absX, absY);
+      if (!pos) return;
+
+      const key = `${pos.row},${pos.col}`;
       if (key === lastHoverRef.current) return;
       lastHoverRef.current = key;
 
-      // Only show ghost if placement is valid (no overlaps, in bounds)
-      const isValid = canPlaceShape(state.grid, piece.shape, row, col);
+      const isValid = canPlaceShape(state.grid, piece.shape, pos.row, pos.col);
       if (isValid) {
         setHoverState({
-          row, col, isValid: true,
+          row: pos.row, col: pos.col, isValid: true,
           shapeGrid: piece.shape.grid,
           color: piece.color,
         });
@@ -77,7 +107,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
         setHoverState(null);
       }
     },
-    [boardLayoutRef, state.grid, piece.shape, piece.color, setHoverState],
+    [toGridPos, state.grid, piece.shape, piece.color, setHoverState],
   );
 
   const handleDrop = useCallback(
@@ -85,40 +115,36 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       setHoverState(null);
       lastHoverRef.current = "";
 
-      const layout = boardLayoutRef.current;
-      if (!layout) return;
+      const pos = toGridPos(absX, absY);
+      if (!pos) return;
 
-      const step = layout.cellSize + layout.cellGap;
-      const shapeH = piece.shape.grid.length;
-      const shapeW = piece.shape.grid[0]?.length ?? 1;
-      const col = Math.floor((absX - layout.x) / step - shapeW / 2 + 0.5);
-      const row = Math.floor((absY + FINGER_OFFSET_Y - layout.y) / step - shapeH / 2 + 0.5);
-
-      // Auto-snap: try exact, then clamped positions
-      const cRow = Math.max(0, Math.min(GRID_SIZE - 1, row));
-      const cCol = Math.max(0, Math.min(GRID_SIZE - 1, col));
-      const positions = [
-        { r: row, c: col },
-        { r: cRow, c: cCol },
-        { r: cRow, c: col },
-        { r: row, c: cCol },
+      // Auto-snap: try exact, then clamped
+      const cRow = Math.max(0, Math.min(GRID_SIZE - 1, pos.row));
+      const cCol = Math.max(0, Math.min(GRID_SIZE - 1, pos.col));
+      const tries = [
+        pos,
+        { row: cRow, col: cCol },
+        { row: cRow, col: pos.col },
+        { row: pos.row, col: cCol },
       ];
 
-      for (const pos of positions) {
-        if (canPlaceShape(state.grid, piece.shape, pos.r, pos.c)) {
-          dispatch({ type: "PLACE_PIECE", row: pos.r, col: pos.c, pieceIndex: index });
+      for (const t of tries) {
+        if (canPlaceShape(state.grid, piece.shape, t.row, t.col)) {
+          dispatch({ type: "PLACE_PIECE", row: t.row, col: t.col, pieceIndex: index });
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           return;
         }
       }
     },
-    [boardLayoutRef, state.grid, piece.shape, dispatch, index, setHoverState],
+    [toGridPos, state.grid, piece.shape, dispatch, index, setHoverState],
   );
 
   const panGesture = Gesture.Pan()
-    .onStart(() => {
+    .hitSlop({ top: 60, bottom: 60, left: 60, right: 60 })
+    .onStart((e) => {
       isDragging.value = true;
-      scale.value = withSpring(scaleTarget.value, { damping: 14, stiffness: 200 });
+      scale.value = withSpring(scaleTarget.value, { damping: 18, stiffness: 250 });
+      runOnJS(handleDragStart)(e.absoluteX, e.absoluteY);
     })
     .onUpdate((e) => {
       translateX.value = e.translationX;
@@ -130,9 +156,9 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     })
     .onFinalize(() => {
       isDragging.value = false;
-      translateX.value = withSpring(0, SPRING_BOUNCE);
-      translateY.value = withSpring(0, SPRING_BOUNCE);
-      scale.value = withSpring(1, SPRING_BOUNCE);
+      translateX.value = withSpring(0, SPRING_SNAP);
+      translateY.value = withSpring(0, SPRING_SNAP);
+      scale.value = withSpring(1, SPRING_SNAP);
     });
 
   const shapeStyle = useAnimatedStyle(() => ({
@@ -155,6 +181,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
   return (
     <View
+      ref={pieceViewRef}
       className="flex-1 items-center justify-center py-4"
       style={{ overflow: "visible" }}
     >
