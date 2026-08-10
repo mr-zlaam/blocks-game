@@ -52,19 +52,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "PLACE_PIECE":
-      return handlePlacePiece(state, action.row, action.col);
+      return handlePlacePiece(state, action.row, action.col, action.pieceIndex);
 
     default:
       return state;
   }
 }
 
-function handlePlacePiece(state: GameState, row: number, col: number): GameState {
-  if (state.status !== "playing" || state.selectedPieceIndex === null) {
-    return state;
-  }
+function handlePlacePiece(state: GameState, row: number, col: number, pieceIndex: number): GameState {
+  if (state.status !== "playing") return state;
 
-  const piece = state.pieces[state.selectedPieceIndex];
+  const piece = state.pieces[pieceIndex];
   if (!piece || piece.isPlaced) return state;
 
   if (!canPlaceShape(state.grid, piece.shape, row, col)) return state;
@@ -87,7 +85,7 @@ function handlePlacePiece(state: GameState, row: number, col: number): GameState
 
   // 4. Mark piece as placed
   const newPieces = state.pieces.map((p, i) =>
-    i === state.selectedPieceIndex ? { ...p, isPlaced: true } : p,
+    i === pieceIndex ? { ...p, isPlaced: true } : p,
   );
 
   // 5. If all 3 placed, generate new set

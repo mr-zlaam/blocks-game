@@ -1,29 +1,30 @@
 import { View, Text } from "react-native";
 
 import { useGame } from "@/contexts/GameContext";
-import PieceSlot from "./PieceSlot";
+import DraggablePiece from "./DraggablePiece";
 
 /**
  * Displays the 3 available pieces for the current round.
- * Player taps a piece to select it, then taps the board to place.
+ * Each piece is draggable onto the board.
+ * overflow: visible ensures dragged pieces render above the board.
  */
 export default function PieceTray() {
-  const { state, dispatch } = useGame();
+  const { state } = useGame();
 
   return (
-    <View className="px-4 mt-4">
+    <View className="px-4 mt-4" style={{ overflow: "visible", zIndex: 10 }}>
       <Text className="text-text-muted text-xs uppercase tracking-widest mb-2 text-center">
-        {state.selectedPieceIndex !== null
-          ? "Tap the board to place"
-          : "Select a piece"}
+        Drag a piece to the board
       </Text>
-      <View className="flex-row gap-3">
+      <View
+        className="flex-row gap-3 bg-surface rounded-game-lg p-2"
+        style={{ overflow: "visible" }}
+      >
         {state.pieces.map((piece, index) => (
-          <PieceSlot
+          <DraggablePiece
             key={`${piece.shape.id}-${index}`}
             piece={piece}
-            isSelected={state.selectedPieceIndex === index}
-            onSelect={() => dispatch({ type: "SELECT_PIECE", index })}
+            index={index}
           />
         ))}
       </View>

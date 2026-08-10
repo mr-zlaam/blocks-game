@@ -68,5 +68,5 @@ export interface GameState {
 export type GameAction =
   | { type: "START_GAME" }
   | { type: "SELECT_PIECE"; index: number }
-  | { type: "PLACE_PIECE"; row: number; col: number }
+  | { type: "PLACE_PIECE"; row: number; col: number; pieceIndex: number }
   | { type: "NEW_GAME" };
