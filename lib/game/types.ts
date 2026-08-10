@@ -15,25 +15,58 @@ export type BlockColor =
 
 /** A shape definition — the blueprint for a placeable piece. */
 export interface ShapeDefinition {
-  /** Unique shape identifier. */
   readonly id: string;
-  /** Human-readable name. */
   readonly name: string;
-  /** 2D grid where `true` = filled cell. */
   readonly grid: readonly (readonly boolean[])[];
-  /** Difficulty tier (1 = easy, 5 = nightmare). */
   readonly tier: DifficultyTier;
 }
 
-/** The list of all block color keys for random assignment. */
+/** The list of all block color keys. */
 export const BLOCK_COLORS: readonly BlockColor[] = [
-  "red",
-  "orange",
-  "yellow",
-  "green",
-  "blue",
-  "indigo",
-  "purple",
-  "pink",
-  "cyan",
+  "red", "orange", "yellow", "green", "blue",
+  "indigo", "purple", "pink", "cyan",
 ] as const;
+
+/** Grid dimensions. */
+export const GRID_SIZE = 8;
+
+/** State of a single cell on the board. */
+export interface CellState {
+  filled: boolean;
+  color: BlockColor | null;
+}
+
+/** 8×8 game grid. */
+export type Grid = CellState[][];
+
+/** A game piece — shape + assigned color + placement status. */
+export interface GamePiece {
+  shape: ShapeDefinition;
+  color: BlockColor;
+  isPlaced: boolean;
+}
+
+/** Overall game status. */
+export type GameStatus = "playing" | "game_over";
+
+/** Full game state. */
+export interface GameState {
+  grid: Grid;
+  pieces: GamePiece[];
+  selectedPieceIndex: number | null;
+  score: number;
+  highScore: number;
+  combo: number;
+  turnsWithoutClear: number;
+  piecesPlaced: number;
+  totalLinesCleared: number;
+  totalCombos: number;
+  status: GameStatus;
+}
+
+/** Actions the player can take. */
+export type GameAction =
+  | { type: "START_GAME" }
+  | { type: "SELECT_PIECE"; index: number }
+  | { type: "PLACE_PIECE"; row: number; col: number }
+  | { type: "NEW_GAME" };
