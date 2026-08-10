@@ -67,15 +67,15 @@ module.exports = {
 
         /* ── Game Block Colors ───────────────── */
         block: {
-          red: "#FF6B6B",
+          red: "#FF4757",
           orange: "#FF9F43",
-          yellow: "#FECA57",
+          yellow: "#FFCB2B",
           green: "#2ED573",
-          blue: "#48DBFB",
-          indigo: "#6C5CE7",
-          purple: "#A29BFE",
-          pink: "#FD79A8",
-          cyan: "#00CEC9",
+          blue: "#2E86FF",
+          indigo: "#5F27CD",
+          purple: "#C44FFF",
+          pink: "#FF6B9D",
+          cyan: "#00D2FF",
         },
       },
 
