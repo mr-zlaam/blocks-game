@@ -42,23 +42,23 @@ const T_UP = shape("t_up", "T Up", 3, ["XXX", ".X."]);
 const T_DOWN = shape("t_down", "T Down", 3, [".X.", "XXX"]);
 const T_LEFT = shape("t_left", "T Left", 3, ["X.", "XX", "X."]);
 const T_RIGHT = shape("t_right", "T Right", 3, [".X", "XX", ".X"]);
-const S_SHAPE = shape("s_shape", "S Shape", 3, [".XX", "XX."]);
-const Z_SHAPE = shape("z_shape", "Z Shape", 3, ["XX.", ".XX"]);
+const RECT_2X3 = shape("rect_2x3", "Rect 2×3", 3, ["XXX", "XXX"]);
+const RECT_3X2 = shape("rect_3x2", "Rect 3×2", 3, ["XX", "XX", "XX"]);
 
 /* ── Tier 4 — Very Hard ────────────────────────────── */
 
 const LINE_5H = shape("line_5h", "Line 5H", 4, ["XXXXX"]);
 const LINE_5V = shape("line_5v", "Line 5V", 4, ["X", "X", "X", "X", "X"]);
-const RECT_2X3 = shape("rect_2x3", "Rect 2×3", 4, ["XXX", "XXX"]);
-const RECT_3X2 = shape("rect_3x2", "Rect 3×2", 4, ["XX", "XX", "XX"]);
 const L_BIG_1 = shape("l_big_1", "L Big ↱", 4, ["X..", "X..", "XXX"]);
 const L_BIG_2 = shape("l_big_2", "L Big ↰", 4, ["..X", "..X", "XXX"]);
 const L_BIG_3 = shape("l_big_3", "L Big ↲", 4, ["XXX", "X..", "X.."]);
 const L_BIG_4 = shape("l_big_4", "L Big ↳", 4, ["XXX", "..X", "..X"]);
+const SQUARE_3 = shape("square_3", "Square 3×3", 4, ["XXX", "XXX", "XXX"]);
 
 /* ── Tier 5 — Nightmare ────────────────────────────── */
 
-const SQUARE_3 = shape("square_3", "Square 3×3", 5, ["XXX", "XXX", "XXX"]);
+const S_SHAPE = shape("s_shape", "S Shape", 5, [".XX", "XX."]);
+const Z_SHAPE = shape("z_shape", "Z Shape", 5, ["XX.", ".XX"]);
 const CROSS = shape("cross", "Cross", 5, [".X.", "XXX", ".X."]);
 const CORNER_BIG = shape("corner_big", "Corner Big", 5, ["XXX", "X..", "X.."]);
 
@@ -66,9 +66,9 @@ const CORNER_BIG = shape("corner_big", "Corner Big", 5, ["XXX", "X..", "X.."]);
 export const SHAPES_BY_TIER: Record<DifficultyTier, readonly ShapeDefinition[]> = {
   1: [DOT, LINE_2H, LINE_2V],
   2: [LINE_3H, LINE_3V, SQUARE_2, L_SM_1, L_SM_2, L_SM_3, L_SM_4],
-  3: [LINE_4H, LINE_4V, T_UP, T_DOWN, T_LEFT, T_RIGHT, S_SHAPE, Z_SHAPE],
-  4: [LINE_5H, LINE_5V, RECT_2X3, RECT_3X2, L_BIG_1, L_BIG_2, L_BIG_3, L_BIG_4],
-  5: [SQUARE_3, CROSS, CORNER_BIG],
+  3: [LINE_4H, LINE_4V, T_UP, T_DOWN, T_LEFT, T_RIGHT, RECT_2X3, RECT_3X2, SQUARE_3],
+  4: [LINE_5H, LINE_5V, L_BIG_1, L_BIG_2, L_BIG_3, L_BIG_4],
+  5: [S_SHAPE, Z_SHAPE, CROSS, CORNER_BIG],
 };
 
 /** Flat array of all shapes. */
