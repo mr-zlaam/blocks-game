@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { BEVEL, BEVEL_COLORS } from "./styles";
+import { BEVEL_COLORS, getProportionalBevel } from "./styles";
 
 import type { BlockCellProps } from "./types";
 
@@ -19,17 +19,19 @@ export default function BlockCell({
     return <View style={{ width: size, height: size }} />;
   }
 
+  const { radius, bevelLight, bevelDark } = getProportionalBevel(size);
+
   return (
     <View
       className={`${colorClass} overflow-hidden`}
       style={{
         width: size,
         height: size,
-        borderRadius: 6,
-        borderTopWidth: BEVEL.top,
-        borderLeftWidth: BEVEL.left,
-        borderBottomWidth: BEVEL.bottom,
-        borderRightWidth: BEVEL.right,
+        borderRadius: radius,
+        borderTopWidth: bevelLight,
+        borderLeftWidth: bevelLight,
+        borderBottomWidth: bevelDark,
+        borderRightWidth: bevelDark,
         borderTopColor: BEVEL_COLORS.top,
         borderLeftColor: BEVEL_COLORS.left,
         borderBottomColor: BEVEL_COLORS.bottom,
@@ -45,8 +47,8 @@ export default function BlockCell({
           right: 0,
           height: "45%",
           backgroundColor: "rgba(255, 255, 255, 0.13)",
-          borderTopLeftRadius: 3,
-          borderTopRightRadius: 3,
+          borderTopLeftRadius: radius / 2,
+          borderTopRightRadius: radius / 2,
         }}
       />
       {/* Inner depth — subtle bottom shadow */}
@@ -58,8 +60,8 @@ export default function BlockCell({
           right: 0,
           height: "30%",
           backgroundColor: "rgba(0, 0, 0, 0.08)",
-          borderBottomLeftRadius: 3,
-          borderBottomRightRadius: 3,
+          borderBottomLeftRadius: radius / 2,
+          borderBottomRightRadius: radius / 2,
         }}
       />
     </View>

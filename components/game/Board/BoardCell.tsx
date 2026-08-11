@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { BEVEL_COLORS, BLOCK_COLOR_CLASSES } from "@/components/game/BlockShape/styles";
+import { BEVEL_COLORS, BLOCK_COLOR_CLASSES, getProportionalBevel } from "@/components/game/BlockShape/styles";
 
 import type { BlockColor } from "@/lib/game";
 
@@ -26,10 +26,8 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
     );
   }
 
-  // Proportional bevels — match the same visual weight as tray pieces
-  const bevelLight = Math.round(size * 0.11);
-  const bevelDark = Math.round(size * 0.13);
-  const radius = Math.round(size * 0.14);
+  // Use the exact same proportional logic as BlockCell for pixel-perfect matching
+  const { radius, bevelLight, bevelDark } = getProportionalBevel(size);
 
   return (
     <View

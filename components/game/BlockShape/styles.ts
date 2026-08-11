@@ -37,3 +37,12 @@ export const BEVEL_COLORS = {
   bottom: "rgba(0, 0, 0, 0.40)",
   right: "rgba(0, 0, 0, 0.22)",
 } as const;
+
+/** Computes 3D bevel dimensions proportionally to cell size for perfect visual matching at any scale. */
+export function getProportionalBevel(size: number) {
+  return {
+    radius: Math.max(2, Math.round(size * 0.22)),
+    bevelLight: Math.max(1, Math.round(size * 0.11)),
+    bevelDark: Math.max(1, Math.round(size * 0.14)),
+  };
+}
