@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { BEVEL, BEVEL_COLORS, BLOCK_COLOR_CLASSES } from "@/components/game/BlockShape/styles";
+import { BEVEL_COLORS, BLOCK_COLOR_CLASSES } from "@/components/game/BlockShape/styles";
 
 import type { BlockColor } from "@/lib/game";
 
@@ -26,17 +26,22 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
     );
   }
 
+  // Proportional bevels — match the same visual weight as tray pieces
+  const bevelLight = Math.round(size * 0.11);
+  const bevelDark = Math.round(size * 0.13);
+  const radius = Math.round(size * 0.14);
+
   return (
     <View
       className={`${BLOCK_COLOR_CLASSES[color]} overflow-hidden`}
       style={{
         width: size,
         height: size,
-        borderRadius: 6,
-        borderTopWidth: BEVEL.top,
-        borderLeftWidth: BEVEL.left,
-        borderBottomWidth: BEVEL.bottom,
-        borderRightWidth: BEVEL.right,
+        borderRadius: radius,
+        borderTopWidth: bevelLight,
+        borderLeftWidth: bevelLight,
+        borderBottomWidth: bevelDark,
+        borderRightWidth: bevelDark,
         borderTopColor: BEVEL_COLORS.top,
         borderLeftColor: BEVEL_COLORS.left,
         borderBottomColor: BEVEL_COLORS.bottom,
@@ -49,8 +54,8 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
           top: 0, left: 0, right: 0,
           height: "45%",
           backgroundColor: "rgba(255, 255, 255, 0.13)",
-          borderTopLeftRadius: 3,
-          borderTopRightRadius: 3,
+          borderTopLeftRadius: radius / 2,
+          borderTopRightRadius: radius / 2,
         }}
       />
       <View
@@ -59,8 +64,8 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
           bottom: 0, left: 0, right: 0,
           height: "30%",
           backgroundColor: "rgba(0, 0, 0, 0.08)",
-          borderBottomLeftRadius: 3,
-          borderBottomRightRadius: 3,
+          borderBottomLeftRadius: radius / 2,
+          borderBottomRightRadius: radius / 2,
         }}
       />
     </View>
