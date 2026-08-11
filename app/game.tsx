@@ -35,15 +35,15 @@ export default function Game() {
           <ScoreBar />
 
           {/* Game Board */}
-          <View className="flex-1 justify-center">
+          <View className="flex-1 justify-center" style={{ transform: [{ translateY: -20 }] }}>
             <Board />
           </View>
 
           {/* Piece Tray */}
           <PieceTray />
 
-          {/* Spacer for bottom safe area */}
-          <View className="h-4" />
+          {/* Reserved Space for Future Ads (Pushes Piece Tray Up) */}
+          <View className="h-24" />
         </SafeAreaView>
 
         {/* Game Over Overlay (renders on top when game_over) */}
