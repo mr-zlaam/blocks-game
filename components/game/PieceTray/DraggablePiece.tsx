@@ -5,6 +5,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
+  Easing,
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -178,22 +180,63 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
       const target = findNearestValidPos(absX, absY);
       if (target) {
-        dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        const layout = boardLayoutRef.current;
+        if (layout) {
+          const step = layout.cellSize + layout.cellGap;
+          const shapeH = piece.shape.grid.length;
+          const shapeW = piece.shape.grid[0]?.length ?? 1;
+
+          // Target exact center coords on screen
+          const targetCX = layout.x + (target.col + shapeW / 2) * step;
+          const targetCY = layout.y + (target.row + shapeH / 2) * step;
+
+          // Current piece center coords on screen
+          const currentCX = absX + offsetRef.current.x;
+          const currentCY = absY + offsetRef.current.y + FINGER_OFFSET_Y;
+
+          // Vector distance to glide
+          const diffX = targetCX - currentCX;
+          const diffY = targetCY - currentCY;
+
+          translateX.value = withTiming(translateX.value + diffX, { duration: 100, easing: Easing.out(Easing.quad) });
+          translateY.value = withTiming(translateY.value + diffY, { duration: 100, easing: Easing.out(Easing.quad) }, (finished) => {
+            if (finished) {
+              runOnJS(dispatch)({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
+              runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
+            }
+          });
+        } else {
+          // Fallback if layout ref is missing (should never happen)
+          dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
         return;
       }
 
       // No valid position — spring back
       resetToTray();
     },
-    [findNearestValidPos, dispatch, index, setHoverState, resetToTray],
+    [
+      findNearestValidPos,
+      dispatch,
+      index,
+      setHoverState,
+      resetToTray,
+      boardLayoutRef,
+      piece.shape.grid,
+      translateX,
+      translateY,
+    ],
   );
 
   const panGesture = Gesture.Pan()
     .hitSlop({ top: 60, bottom: 60, left: 60, right: 60 })
     .onStart((e) => {
       isDragging.value = true;
-      scale.value = withSpring(scaleTarget.value, { damping: 18, stiffness: 250 });
+      scale.value = withTiming(scaleTarget.value, { 
+        duration: 150, 
+        easing: Easing.out(Easing.quad) 
+      });
       runOnJS(handleDragStart)(e.absoluteX, e.absoluteY);
     })
     .onUpdate((e) => {

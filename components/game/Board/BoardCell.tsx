@@ -15,12 +15,12 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
   if (!filled || !color) {
     return (
       <View
-        className="bg-surface-elevated rounded-md"
+        className="bg-surface rounded-md"
         style={{
           width: size,
           height: size,
           borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.02)",
+          borderColor: "rgba(255, 255, 255, 0.015)",
         }}
       />
     );
