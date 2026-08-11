@@ -1,5 +1,6 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { View, useWindowDimensions } from "react-native";
+import { useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 
 import { GRID_SIZE } from "@/lib/game";
 import { useGame } from "@/contexts/GameContext";
@@ -17,8 +18,24 @@ const CELL_GAP = 2;
  */
 export default function Board() {
   const { width } = useWindowDimensions();
-  const { state, boardLayoutRef } = useGame();
+  const { state, boardLayoutRef, hoverState } = useGame();
   const gridRef = useRef<View>(null);
+  
+  const pulseOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (hoverState?.wouldScore) {
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.6, { duration: 600 }),
+          withTiming(0.15, { duration: 600 })
+        ),
+        -1, true
+      );
+    } else {
+      pulseOpacity.value = 0;
+    }
+  }, [hoverState?.wouldScore, pulseOpacity]);
 
   const boardInnerWidth = width - 16 * 2;
   const cellSize = Math.floor(
@@ -40,14 +57,22 @@ export default function Board() {
       <View ref={gridRef} onLayout={handleLayout} style={{ gap: CELL_GAP }}>
         {state.grid.map((row, rowIndex) => (
           <View key={rowIndex} style={{ flexDirection: "row", gap: CELL_GAP }}>
-            {row.map((cell, colIndex) => (
-              <BoardCell
-                key={colIndex}
-                filled={cell.filled}
-                color={cell.color}
-                size={cellSize}
-              />
-            ))}
+            {row.map((cell, colIndex) => {
+              const isDoomedRow = hoverState?.completedLines?.rows.includes(rowIndex);
+              const isDoomedCol = hoverState?.completedLines?.cols.includes(colIndex);
+              const isDoomed = Boolean(hoverState?.wouldScore && (isDoomedRow || isDoomedCol) && cell.filled);
+
+              return (
+                <BoardCell
+                  key={colIndex}
+                  filled={cell.filled}
+                  color={cell.color}
+                  size={cellSize}
+                  isDoomed={isDoomed}
+                  glowOpacity={pulseOpacity}
+                />
+              );
+            })}
           </View>
         ))}
 

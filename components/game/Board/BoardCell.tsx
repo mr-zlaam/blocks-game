@@ -1,4 +1,5 @@
 import { View } from "react-native";
+import Animated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
 
 import { BEVEL_COLORS, BLOCK_COLOR_CLASSES, getProportionalBevel } from "@/components/game/BlockShape/styles";
 
@@ -8,19 +9,26 @@ interface BoardCellProps {
   filled: boolean;
   color: BlockColor | null;
   size: number;
+  isDoomed?: boolean;
+  glowOpacity?: SharedValue<number>;
 }
 
 /** A single cell on the game board. Empty = subtle grid square, filled = 3D block. */
-export default function BoardCell({ filled, color, size }: BoardCellProps) {
+export default function BoardCell({ filled, color, size, isDoomed, glowOpacity }: BoardCellProps) {
+  const glowStyle = useAnimatedStyle(() => {
+    return {
+      opacity: isDoomed && glowOpacity ? glowOpacity.value : 0,
+    };
+  }, [isDoomed, glowOpacity]);
+
   if (!filled || !color) {
     return (
       <View
-        className="bg-surface-elevated rounded-md"
         style={{
           width: size,
           height: size,
-          borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.04)",
+          backgroundColor: "rgba(255, 255, 255, 0.025)",
+          borderRadius: 6,
         }}
       />
     );
@@ -66,6 +74,20 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
           borderBottomRightRadius: radius / 2,
         }}
       />
+      {/* Doomed glow overlay */}
+      {isDoomed && (
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: "white",
+              borderRadius: radius,
+            },
+            glowStyle,
+          ]}
+        />
+      )}
     </View>
   );
 }
