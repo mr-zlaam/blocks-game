@@ -1,54 +1,90 @@
-import { View, Text } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
+import { playSound } from "@/lib/audio";
 import { useGame } from "@/contexts/GameContext";
-import { GameButton } from "@/components/ui/GameButton";
 
 /**
  * Game over overlay — full-screen, covers the board.
- * Shows final score, high score, and play again button.
- * This is a custom overlay — NOT a native Modal.
+ * Animates a text over the board for 2 seconds, then shows final screen.
  */
 export default function GameOverOverlay() {
   const { state, dispatch } = useGame();
+  const [phase, setPhase] = useState<"hidden" | "animating" | "result">("hidden");
 
-  if (state.status !== "game_over") return null;
+  useEffect(() => {
+    if (state.status === "game_over") {
+      setPhase("animating");
+      void playSound("lose");
+      
+      const timer = setTimeout(() => {
+        setPhase("result");
+        void playSound("gameover");
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else {
+      setPhase("hidden");
+      return undefined;
+    }
+  }, [state.status]);
+
+  if (phase === "hidden") return null;
+
+  if (phase === "animating") {
+    return (
+      <View className="absolute inset-0 items-center justify-center pointer-events-none z-50">
+        <Text 
+          className="text-white text-5xl font-black text-center leading-tight" 
+          style={{
+            textShadowColor: 'rgba(0, 0, 0, 0.8)', 
+            textShadowRadius: 15, 
+            textShadowOffset: { width: 0, height: 6 }
+          }}
+        >
+          No Space{"\n"}Left!
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View
       className="absolute inset-0 items-center justify-center"
-      style={{ backgroundColor: "rgba(15, 14, 23, 0.92)" }}
+      style={{ backgroundColor: "rgba(15, 14, 23, 0.98)" }}
     >
-      <View className="bg-surface rounded-game-xl p-8 items-center mx-8">
-        <Text className="text-danger text-2xl font-bold mb-2">Game Over</Text>
-        <Text className="text-text-muted text-sm mb-6">No more moves!</Text>
+      <View className="items-center px-8 w-full max-w-sm">
+        <Text className="text-accent text-5xl font-black mb-1 tracking-wide text-center">You Lost</Text>
+        <Text className="text-accent text-4xl font-black mb-12 tracking-wide text-center">Try Again!</Text>
 
-        <Text className="text-text-muted text-xs uppercase tracking-widest">
-          Final Score
+        <Text className="text-text-muted text-sm uppercase tracking-widest font-bold mb-2">
+          Score
         </Text>
-        <Text className="text-text text-5xl font-bold mb-4">
+        <Text className="text-white text-7xl font-black mb-10 tracking-tight">
           {state.score}
         </Text>
 
-        {state.score >= state.highScore && state.score > 0 ? (
-          <Text className="text-accent text-sm font-bold mb-4">
-            🏆 New High Score!
-          </Text>
-        ) : (
-          <Text className="text-text-muted text-sm mb-4">
-            Best: {state.highScore}
-          </Text>
-        )}
-
-        <Text className="text-text-muted text-xs mb-6">
-          Lines: {state.totalLinesCleared} · Combos: {state.totalCombos}
+        <Text className="text-text-muted text-sm uppercase tracking-widest font-bold mb-2">
+          Best Score
+        </Text>
+        <Text className="text-accent text-4xl font-black mb-14 tracking-tight">
+          {state.highScore}
         </Text>
 
-        <GameButton
-          label="Play Again"
-          variant="primary"
-          size="lg"
-          onPress={() => dispatch({ type: "NEW_GAME" })}
-        />
+        <Pressable
+          onPress={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            dispatch({ type: "NEW_GAME" });
+          }}
+          className="w-48 h-16 bg-primary flex-row justify-center items-center rounded-game-xl active:scale-95"
+          style={{
+            borderBottomWidth: 4,
+            borderBottomColor: "#4A3DB8", // primary-dark
+          }}
+        >
+          <Ionicons name="play" size={36} color="white" style={{ marginLeft: 6 }} />
+        </Pressable>
       </View>
     </View>
   );

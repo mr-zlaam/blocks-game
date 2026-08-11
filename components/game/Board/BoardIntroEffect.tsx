@@ -13,6 +13,7 @@ import Animated, {
 import { useGame } from "@/contexts/GameContext";
 import { GRID_SIZE, BlockColor } from "@/lib/game";
 import { BLOCK_COLOR_CLASSES, getProportionalBevel, BEVEL_COLORS } from "@/components/game/BlockShape/styles";
+import { playSound } from "@/lib/audio";
 
 const COLORS: BlockColor[] = ["red", "blue", "green", "yellow", "purple", "cyan", "orange"];
 
@@ -20,7 +21,6 @@ interface BoardIntroEffectProps {
   cellSize: number;
   cellGap: number;
 }
-
 export default function BoardIntroEffect({ cellSize, cellGap }: BoardIntroEffectProps) {
   const { state } = useGame();
   const [animating, setAnimating] = useState(false);
@@ -31,8 +31,12 @@ export default function BoardIntroEffect({ cellSize, cellGap }: BoardIntroEffect
   useEffect(() => {
     if (isBoardEmpty && state.status === "playing") {
       setAnimating(true);
+      // If it's a perfect clear (not first load), play bonus sound
+      if (state.piecesPlaced > 0) {
+        void playSound("bonus");
+      }
     }
-  }, [isBoardEmpty, state.status]);
+  }, [isBoardEmpty, state.status, state.piecesPlaced]);
 
   if (!animating) return null;
 

@@ -208,14 +208,16 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
           translateY.value = withTiming(translateY.value + diffY, { duration: 100, easing: Easing.out(Easing.quad) }, (finished) => {
             if (finished) {
               runOnJS(dispatch)({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
-              runOnJS(playSound)(willScore ? "clear" : "takk");
+              // We will just vibrate on placement, and if scoring, play clear
               runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
+              if (willScore) {
+                runOnJS(playSound)("clear");
+              }
             }
           });
         } else {
           // Fallback if layout ref is missing (should never happen)
           dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
-          playSound(willScore ? "clear" : "takk");
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
         return;

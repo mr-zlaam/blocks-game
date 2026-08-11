@@ -9,6 +9,7 @@ import GhostOverlay from "./GhostOverlay";
 import LineClearEffect from "./LineClearEffect";
 
 import BoardIntroEffect from "./BoardIntroEffect";
+import BoardGameOverEffect from "./BoardGameOverEffect";
 
 const BOARD_PADDING = 6;
 const CELL_GAP = 2;
@@ -80,6 +81,9 @@ export default function Board() {
 
         {/* Intro/Perfect Clear Animation */}
         <BoardIntroEffect cellSize={cellSize} cellGap={CELL_GAP} />
+
+        {/* Game Over Fill Animation */}
+        <BoardGameOverEffect cellSize={cellSize} cellGap={CELL_GAP} />
 
         {/* Ghost preview while dragging */}
         <GhostOverlay cellSize={cellSize} cellGap={CELL_GAP} />
