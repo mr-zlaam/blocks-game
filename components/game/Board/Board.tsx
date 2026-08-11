@@ -5,6 +5,7 @@ import { GRID_SIZE } from "@/lib/game";
 import { useGame } from "@/contexts/GameContext";
 import BoardCell from "./BoardCell";
 import GhostOverlay from "./GhostOverlay";
+import LineClearEffect from "./LineClearEffect";
 
 const BOARD_PADDING = 6;
 const CELL_GAP = 2;
@@ -52,6 +53,9 @@ export default function Board() {
 
         {/* Ghost preview while dragging */}
         <GhostOverlay cellSize={cellSize} cellGap={CELL_GAP} />
+
+        {/* Line clear flash animation */}
+        <LineClearEffect cellSize={cellSize} cellGap={CELL_GAP} />
       </View>
     </View>
   );

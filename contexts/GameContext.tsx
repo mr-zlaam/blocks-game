@@ -27,6 +27,7 @@ export interface HoverState {
   row: number;
   col: number;
   isValid: boolean;
+  wouldScore: boolean;
   shapeGrid: readonly (readonly boolean[])[];
   color: BlockColor;
 }

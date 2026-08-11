@@ -5,12 +5,14 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
+  Easing,
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import { BlockShape } from "@/components/game/BlockShape";
-import { GRID_SIZE, canPlaceShape } from "@/lib/game";
+import { GRID_SIZE, canPlaceShape, placeShape, findCompletedLines } from "@/lib/game";
 import { useGame } from "@/contexts/GameContext";
 
 import type { GamePiece } from "@/lib/game";
@@ -47,10 +49,22 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       scaleTarget.value = layout.cellSize / TRAY_CELL_SIZE;
     }
   }, [boardLayoutRef, scaleTarget]);
-
+  // Reset shared values when a new piece arrives at this slot
   useEffect(() => {
     lastHoverRef.current = "";
-  }, [piece.isPlaced]);
+    if (!piece.isPlaced) {
+      scale.value = 1;
+      translateX.value = 0;
+      translateY.value = 0;
+    }
+  }, [piece.shape.id, piece.isPlaced, scale, translateX, translateY]);
+
+  /** Smoothly return piece to its tray position. */
+  const resetToTray = useCallback(() => {
+    translateX.value = withSpring(0, SPRING_SNAP);
+    translateY.value = withSpring(0, SPRING_SNAP);
+    scale.value = withSpring(1, SPRING_SNAP);
+  }, [translateX, translateY, scale]);
 
   /** Measure piece center vs finger start to get correction offset. */
   const handleDragStart = useCallback(
@@ -98,8 +112,13 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
       const isValid = canPlaceShape(state.grid, piece.shape, pos.row, pos.col);
       if (isValid) {
+        // Check if this placement would complete any lines
+        const tempGrid = placeShape(state.grid, piece.shape, piece.color, pos.row, pos.col);
+        const completed = findCompletedLines(tempGrid);
+        const wouldScore = completed.rows.length + completed.cols.length > 0;
+
         setHoverState({
-          row: pos.row, col: pos.col, isValid: true,
+          row: pos.row, col: pos.col, isValid: true, wouldScore,
           shapeGrid: piece.shape.grid,
           color: piece.color,
         });
@@ -116,7 +135,11 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       lastHoverRef.current = "";
 
       const pos = toGridPos(absX, absY);
-      if (!pos) return;
+      if (!pos) {
+        // No grid position — spring back
+        resetToTray();
+        return;
+      }
 
       // Auto-snap: try exact, then clamped
       const cRow = Math.max(0, Math.min(GRID_SIZE - 1, pos.row));
@@ -130,13 +153,18 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
       for (const t of tries) {
         if (canPlaceShape(state.grid, piece.shape, t.row, t.col)) {
+          // Success: shrink at drop position, then dispatch
+          scale.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
           dispatch({ type: "PLACE_PIECE", row: t.row, col: t.col, pieceIndex: index });
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           return;
         }
       }
+
+      // No valid position — spring back
+      resetToTray();
     },
-    [toGridPos, state.grid, piece.shape, dispatch, index, setHoverState],
+    [toGridPos, state.grid, piece.shape, dispatch, index, setHoverState, scale, resetToTray],
   );
 
   const panGesture = Gesture.Pan()
@@ -156,9 +184,6 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     })
     .onFinalize(() => {
       isDragging.value = false;
-      translateX.value = withSpring(0, SPRING_SNAP);
-      translateY.value = withSpring(0, SPRING_SNAP);
-      scale.value = withSpring(1, SPRING_SNAP);
     });
 
   const shapeStyle = useAnimatedStyle(() => ({

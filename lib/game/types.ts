@@ -62,6 +62,8 @@ export interface GameState {
   totalLinesCleared: number;
   totalCombos: number;
   status: GameStatus;
+  /** Rows/cols cleared on last placement — drives clear animation. */
+  lastClearedLines: { rows: number[]; cols: number[] } | null;
 }
 
 /** Actions the player can take. */

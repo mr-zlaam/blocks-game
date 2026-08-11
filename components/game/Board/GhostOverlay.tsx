@@ -1,4 +1,11 @@
 import { View } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 import { useGame } from "@/contexts/GameContext";
 import { BLOCK_COLOR_CLASSES } from "@/components/game/BlockShape/styles";
@@ -10,18 +17,36 @@ interface GhostOverlayProps {
 }
 
 /**
- * Renders a semi-transparent preview of where the dragged piece will land.
- * Green-tinted when valid, red-tinted when invalid.
- * Positioned absolutely over the board grid.
+ * Renders ghost preview of where a dragged piece will land.
+ * Pulses and glows when the placement would complete a line.
  */
 export default function GhostOverlay({ cellSize, cellGap }: GhostOverlayProps) {
   const { hoverState } = useGame();
+  const pulseOpacity = useSharedValue(0.35);
+
+  // Pulse animation when wouldScore
+  const wouldScore = hoverState?.wouldScore ?? false;
+  if (wouldScore) {
+    pulseOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.6, { duration: 300 }),
+        withTiming(0.25, { duration: 300 }),
+      ),
+      -1, true,
+    );
+  } else {
+    pulseOpacity.value = 0.35;
+  }
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
 
   if (!hoverState) return null;
 
-  const { row, col, isValid, shapeGrid, color } = hoverState;
+  const { row, col, shapeGrid, color } = hoverState;
   const step = cellSize + cellGap;
-  const colorClass = isValid ? BLOCK_COLOR_CLASSES[color] : "bg-danger";
+  const colorClass = BLOCK_COLOR_CLASSES[color];
   const cells: React.JSX.Element[] = [];
 
   for (let r = 0; r < shapeGrid.length; r++) {
@@ -34,17 +59,26 @@ export default function GhostOverlay({ cellSize, cellGap }: GhostOverlayProps) {
       if (gr < 0 || gr >= GRID_SIZE || gc < 0 || gc >= GRID_SIZE) continue;
 
       cells.push(
-        <View
+        <Animated.View
           key={`${r}-${c}`}
           className={`${colorClass} rounded-md`}
-          style={{
-            position: "absolute",
-            left: gc * step,
-            top: gr * step,
-            width: cellSize,
-            height: cellSize,
-            opacity: isValid ? 0.35 : 0.25,
-          }}
+          style={[
+            {
+              position: "absolute",
+              left: gc * step,
+              top: gr * step,
+              width: cellSize,
+              height: cellSize,
+            },
+            pulseStyle,
+            wouldScore && {
+              shadowColor: "#fff",
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.5,
+              shadowRadius: 8,
+              elevation: 6,
+            },
+          ]}
         />,
       );
     }

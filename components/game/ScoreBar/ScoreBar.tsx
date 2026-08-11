@@ -2,8 +2,9 @@ import { View, Text } from "react-native";
 
 import { useGame } from "@/contexts/GameContext";
 import { getComboMultiplier } from "@/lib/game";
+import AnimatedCounter from "@/components/ui/AnimatedCounter";
 
-/** Score display and combo indicator at the top of the game screen. */
+/** Score display with lottery-style counter and combo indicator. */
 export default function ScoreBar() {
   const { state } = useGame();
   const multiplier = getComboMultiplier(state.combo);
@@ -16,7 +17,11 @@ export default function ScoreBar() {
         <Text className="text-text-muted text-xs uppercase tracking-widest">
           Score
         </Text>
-        <Text className="text-text text-3xl font-bold">{state.score}</Text>
+        <AnimatedCounter
+          value={state.score}
+          duration={800}
+          className="text-text text-3xl font-bold"
+        />
       </View>
 
       {/* Combo */}
@@ -38,9 +43,11 @@ export default function ScoreBar() {
         <Text className="text-text-muted text-xs uppercase tracking-widest">
           Best
         </Text>
-        <Text className="text-text-muted text-xl font-bold">
-          {state.highScore}
-        </Text>
+        <AnimatedCounter
+          value={state.highScore}
+          duration={800}
+          className="text-text-muted text-xl font-bold"
+        />
       </View>
     </View>
   );

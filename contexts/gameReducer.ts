@@ -26,6 +26,7 @@ export const INITIAL_STATE: GameState = {
   totalLinesCleared: 0,
   totalCombos: 0,
   status: "playing",
+  lastClearedLines: null,
 };
 
 /** Core game reducer — handles all game state transitions. */
@@ -113,5 +114,6 @@ function handlePlacePiece(state: GameState, row: number, col: number, pieceIndex
     totalLinesCleared: state.totalLinesCleared + linesCleared,
     totalCombos: linesCleared > 0 ? state.totalCombos + 1 : state.totalCombos,
     status: canContinue ? "playing" : "game_over",
+    lastClearedLines: linesCleared > 0 ? completed : null,
   };
 }
