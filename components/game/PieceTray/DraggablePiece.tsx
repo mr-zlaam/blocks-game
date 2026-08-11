@@ -236,7 +236,6 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       piece.shape,
       piece.color,
       state.grid,
-      piece.shape.grid,
       translateX,
       translateY,
     ],

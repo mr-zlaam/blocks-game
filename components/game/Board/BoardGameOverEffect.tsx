@@ -60,7 +60,7 @@ function GameOverCell({ row, col, cellSize, cellGap }: any) {
       fillDelay, 
       withTiming(1, { duration: 300, easing: Easing.out(Easing.back(1.5)) })
     );
-  }, []);
+  }, [row, col, scale]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

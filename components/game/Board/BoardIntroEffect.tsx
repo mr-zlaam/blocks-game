@@ -88,7 +88,7 @@ function IntroCell({ row, col, cellSize, cellGap, onComplete }: any) {
         })
       )
     );
-  }, []);
+  }, [row, col, scale, onComplete]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
