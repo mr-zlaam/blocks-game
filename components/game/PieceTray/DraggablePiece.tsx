@@ -5,8 +5,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  Easing,
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -153,8 +151,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
       for (const t of tries) {
         if (canPlaceShape(state.grid, piece.shape, t.row, t.col)) {
-          // Success: shrink at drop position, then dispatch
-          scale.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+          // Success: dispatch immediately — piece will re-render as placed
           dispatch({ type: "PLACE_PIECE", row: t.row, col: t.col, pieceIndex: index });
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           return;
@@ -164,7 +161,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       // No valid position — spring back
       resetToTray();
     },
-    [toGridPos, state.grid, piece.shape, dispatch, index, setHoverState, scale, resetToTray],
+    [toGridPos, state.grid, piece.shape, dispatch, index, setHoverState, resetToTray],
   );
 
   const panGesture = Gesture.Pan()

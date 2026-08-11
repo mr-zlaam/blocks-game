@@ -20,7 +20,7 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
           width: size,
           height: size,
           borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.04)",
+          borderColor: "rgba(255, 255, 255, 0.02)",
         }}
       />
     );
@@ -49,6 +49,8 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
           top: 0, left: 0, right: 0,
           height: "45%",
           backgroundColor: "rgba(255, 255, 255, 0.13)",
+          borderTopLeftRadius: 3,
+          borderTopRightRadius: 3,
         }}
       />
       <View
@@ -57,6 +59,8 @@ export default function BoardCell({ filled, color, size }: BoardCellProps) {
           bottom: 0, left: 0, right: 0,
           height: "30%",
           backgroundColor: "rgba(0, 0, 0, 0.08)",
+          borderBottomLeftRadius: 3,
+          borderBottomRightRadius: 3,
         }}
       />
     </View>
