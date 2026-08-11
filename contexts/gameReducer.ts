@@ -6,6 +6,7 @@ import {
   canAnyPieceFit,
   canPlaceShape,
   calculateLineScore,
+  calculatePieceScore,
   updateCombo,
   calculateDifficultyScore,
   generatePieceSet,
@@ -84,8 +85,9 @@ function handlePlacePiece(state: GameState, row: number, col: number, pieceIndex
 
   // 3. Update combo & score
   const comboResult = updateCombo(state.combo, state.turnsWithoutClear, linesCleared > 0);
-  const scoreGain = linesCleared > 0 ? calculateLineScore(linesCleared, comboResult.combo) : 0;
-  const newScore = state.score + scoreGain;
+  const placementScore = calculatePieceScore(piece.shape);
+  const lineScoreGain = linesCleared > 0 ? calculateLineScore(linesCleared, comboResult.combo) : 0;
+  const newScore = state.score + placementScore + lineScoreGain;
 
   // 4. Mark piece as placed
   const newPieces = state.pieces.map((p, i) =>

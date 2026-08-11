@@ -10,6 +10,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { playSound } from "@/lib/audio";
 
 import { BlockShape } from "@/components/game/BlockShape";
 import { canPlaceShape, placeShape, findCompletedLines } from "@/lib/game";
@@ -181,6 +182,10 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
       const target = findNearestValidPos(absX, absY);
       if (target) {
+        const tempGrid = placeShape(state.grid, piece.shape, piece.color, target.row, target.col);
+        const completed = findCompletedLines(tempGrid);
+        const willScore = completed.rows.length > 0 || completed.cols.length > 0;
+
         const layout = boardLayoutRef.current;
         if (layout) {
           const step = layout.cellSize + layout.cellGap;
@@ -203,12 +208,14 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
           translateY.value = withTiming(translateY.value + diffY, { duration: 100, easing: Easing.out(Easing.quad) }, (finished) => {
             if (finished) {
               runOnJS(dispatch)({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
+              runOnJS(playSound)(willScore ? "clear" : "takk");
               runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
             }
           });
         } else {
           // Fallback if layout ref is missing (should never happen)
           dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
+          playSound(willScore ? "clear" : "takk");
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
         return;
@@ -224,6 +231,9 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       setHoverState,
       resetToTray,
       boardLayoutRef,
+      piece.shape,
+      piece.color,
+      state.grid,
       piece.shape.grid,
       translateX,
       translateY,
@@ -232,6 +242,10 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
   const panGesture = Gesture.Pan()
     .hitSlop({ top: 60, bottom: 60, left: 60, right: 60 })
+    .onBegin(() => {
+      // Just a subtle vibration when touching the piece
+      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
+    })
     .onStart((e) => {
       isDragging.value = true;
       scale.value = withTiming(scaleTarget.value, { 

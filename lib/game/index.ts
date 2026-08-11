@@ -23,5 +23,10 @@ export {
   getBoardFill,
 } from "./grid";
 
-export { calculateLineScore, getComboMultiplier, updateCombo } from "./scoring";
+export {
+  calculateLineScore,
+  calculatePieceScore,
+  getComboMultiplier,
+  updateCombo,
+} from "./scoring";
 export { calculateDifficultyScore, generatePieceSet } from "./difficulty";

@@ -1,8 +1,10 @@
-/** Points awarded per cleared line. */
-const POINTS_PER_LINE = 10;
+import type { ShapeDefinition } from "./types";
+
+/** Points awarded per cleared line (base). */
+const POINTS_PER_LINE = 100;
 
 /** Maximum combo multiplier cap. */
-const MAX_MULTIPLIER = 3.5;
+const MAX_MULTIPLIER = 10;
 
 /** Number of turns without a clear before combo fully resets. */
 const COMBO_RESET_TURNS = 3;
@@ -12,18 +14,12 @@ const COMBO_HALVE_TURNS = 2;
 
 /**
  * Returns the score multiplier for the current combo count.
- *
- * Combo 1–3:  ×1.0, ×1.5, ×2.0  (linear growth)
- * Combo 4–6:  ×2.3, ×2.6, ×2.8  (slowing)
- * Combo 7–10: ×3.0–3.3          (plateau)
- * Combo 10+:  ×3.5 cap
+ * Grows steadily up to 15x.
  */
 export function getComboMultiplier(combo: number): number {
   if (combo <= 0) return 1;
-  if (combo <= 3) return 1 + (combo - 1) * 0.5;
-  if (combo <= 6) return 2 + (combo - 3) * 0.3;
-  if (combo <= 10) return 3 + (combo - 7) * 0.1;
-  return MAX_MULTIPLIER;
+  const multiplier = 1 + (combo - 1) * 0.8;
+  return Math.min(multiplier, MAX_MULTIPLIER);
 }
 
 /** Calculates score gained from clearing lines with the current combo. */
@@ -31,7 +27,24 @@ export function calculateLineScore(
   linesCleared: number,
   combo: number,
 ): number {
-  return Math.round(linesCleared * POINTS_PER_LINE * getComboMultiplier(combo));
+  if (linesCleared === 0) return 0;
+  // Exponential multi-line scaling (1 line = 1x, 2 lines = 2.5x, 3 lines = 4x, etc.)
+  const multiLineMultiplier = 1 + (linesCleared - 1) * 1.5;
+  const baseScore = linesCleared * POINTS_PER_LINE * multiLineMultiplier;
+  return Math.round(baseScore * getComboMultiplier(combo));
+}
+
+/** Calculates base points just for placing a piece on the board. */
+export function calculatePieceScore(shape: ShapeDefinition): number {
+  let blocks = 0;
+  for (let r = 0; r < shape.grid.length; r++) {
+    const row = shape.grid[r];
+    if (!row) continue;
+    for (let c = 0; c < row.length; c++) {
+      if (row[c]) blocks++;
+    }
+  }
+  return blocks * 10; // 10 points per block
 }
 
 /**
