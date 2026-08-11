@@ -12,7 +12,7 @@ import Animated, {
 
 import { useGame } from "@/contexts/GameContext";
 import { GRID_SIZE, BlockColor } from "@/lib/game";
-import { BLOCK_COLOR_CLASSES, getProportionalBevel } from "@/components/game/BlockShape/styles";
+import { BLOCK_COLOR_CLASSES, getProportionalBevel, BEVEL_COLORS } from "@/components/game/BlockShape/styles";
 
 const COLORS: BlockColor[] = ["red", "blue", "green", "yellow", "purple", "cyan", "orange"];
 
@@ -61,7 +61,7 @@ export default function BoardIntroEffect({ cellSize, cellGap }: BoardIntroEffect
 
 function IntroCell({ row, col, cellSize, cellGap, onComplete }: any) {
   const scale = useSharedValue(0);
-  const { radius } = getProportionalBevel(cellSize);
+  const { radius, bevelLight, bevelDark } = getProportionalBevel(cellSize);
   
   // Diagonal color stripes
   const color = COLORS[(row + col) % COLORS.length]!;
@@ -104,30 +104,17 @@ function IntroCell({ row, col, cellSize, cellGap, onComplete }: any) {
           width: cellSize,
           height: cellSize,
           borderRadius: radius,
+          borderTopWidth: bevelLight,
+          borderLeftWidth: bevelLight,
+          borderBottomWidth: bevelDark,
+          borderRightWidth: bevelDark,
+          borderTopColor: BEVEL_COLORS.top,
+          borderLeftColor: BEVEL_COLORS.left,
+          borderBottomColor: BEVEL_COLORS.bottom,
+          borderRightColor: BEVEL_COLORS.right,
         },
         style,
       ]}
-    >
-      <View
-        style={{
-          position: "absolute",
-          top: 0, left: 0, right: 0,
-          height: "45%",
-          backgroundColor: "rgba(255, 255, 255, 0.13)",
-          borderTopLeftRadius: radius,
-          borderTopRightRadius: radius,
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0, left: 0, right: 0,
-          height: "30%",
-          backgroundColor: "rgba(0, 0, 0, 0.08)",
-          borderBottomLeftRadius: radius,
-          borderBottomRightRadius: radius,
-        }}
-      />
-    </Animated.View>
+    />
   );
 }

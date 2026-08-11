@@ -32,17 +32,17 @@ export const BEVEL = {
 
 /** 3D bevel border colors. */
 export const BEVEL_COLORS = {
-  top: "rgba(255, 255, 255, 0.40)",
-  left: "rgba(255, 255, 255, 0.22)",
-  bottom: "rgba(0, 0, 0, 0.40)",
-  right: "rgba(0, 0, 0, 0.22)",
+  top: "rgba(255, 255, 255, 0.45)",
+  left: "rgba(255, 255, 255, 0.25)",
+  bottom: "rgba(0, 0, 0, 0.45)",
+  right: "rgba(0, 0, 0, 0.25)",
 } as const;
 
 /** Computes 3D bevel dimensions proportionally to cell size for perfect visual matching at any scale. */
 export function getProportionalBevel(size: number) {
   return {
-    radius: Math.max(2, Math.round(size * 0.22)),
-    bevelLight: Math.max(1, Math.round(size * 0.11)),
-    bevelDark: Math.max(1, Math.round(size * 0.14)),
+    radius: Math.max(3, Math.round(size * 0.08)), // Sharper corners like the reference
+    bevelLight: Math.max(2, Math.round(size * 0.14)), // Uniform thick border for clean miters
+    bevelDark: Math.max(2, Math.round(size * 0.14)),
   };
 }

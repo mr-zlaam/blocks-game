@@ -54,26 +54,6 @@ export default function BoardCell({ filled, color, size, isDoomed, glowOpacity }
         borderRightColor: BEVEL_COLORS.right,
       }}
     >
-      <View
-        style={{
-          position: "absolute",
-          top: 0, left: 0, right: 0,
-          height: "45%",
-          backgroundColor: "rgba(255, 255, 255, 0.13)",
-          borderTopLeftRadius: radius / 2,
-          borderTopRightRadius: radius / 2,
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0, left: 0, right: 0,
-          height: "30%",
-          backgroundColor: "rgba(0, 0, 0, 0.08)",
-          borderBottomLeftRadius: radius / 2,
-          borderBottomRightRadius: radius / 2,
-        }}
-      />
       {/* Doomed glow overlay */}
       {isDoomed && (
         <Animated.View

@@ -9,7 +9,7 @@ export async function preloadSounds() {
     await setAudioModeAsync({ playsInSilentMode: true });
 
     sounds.takk = createAudioPlayer(require("../assets/sounds/takk.wav"));
-    sounds.clear = createAudioPlayer(require("../assets/sounds/clear.wav"));
+    sounds.clear = createAudioPlayer(require("../assets/sounds/hooting.wav"));
   } catch (err) {
     console.warn("Failed to load sounds", err);
   }
