@@ -29,4 +29,4 @@ export {
   getComboMultiplier,
   updateCombo,
 } from "./scoring";
-export { calculateDifficultyScore, generatePieceSet } from "./difficulty";
+export { calculateDifficultyScore, generatePieceSet, rescueUnfittablePieces } from "./difficulty";

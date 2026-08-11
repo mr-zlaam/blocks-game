@@ -243,6 +243,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
 
   const panGesture = Gesture.Pan()
     .hitSlop({ top: 60, bottom: 60, left: 60, right: 60 })
+    .minDistance(0)
     .onBegin(() => {
       // Just a subtle vibration when touching the piece
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
@@ -250,7 +251,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     .onStart((e) => {
       isDragging.value = true;
       scale.value = withTiming(scaleTarget.value, { 
-        duration: 150, 
+        duration: 80, 
         easing: Easing.out(Easing.quad) 
       });
       runOnJS(handleDragStart)(e.absoluteX, e.absoluteY);

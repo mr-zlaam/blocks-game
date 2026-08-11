@@ -14,11 +14,11 @@ import type {
 /** Weight table: [tier1%, tier2%, tier3%, tier4%, tier5%] per bracket. */
 const WEIGHT_TABLE: readonly (readonly number[])[] = [
   // [Tier 1, Tier 2, Tier 3, Tier 4, Tier 5] percentages
-  [ 5, 25, 55, 15,  0],   // Score 0–5000:       Honeymoon (Very few dots, lots of T3/T4)
-  [30, 35, 20, 10,  5],   // Score 5000–10000:   Learning
-  [15, 25, 30, 20, 10],   // Score 10000–15000:  Mid-game
-  [ 5, 15, 30, 30, 20],   // Score 15000–25000:  Sweat
-  [ 0, 10, 25, 35, 30],   // Score 25000+:       Survival
+  [ 5, 25, 50, 20,  0],   // Score 0–10000:      Honeymoon (easy, fun shapes)
+  [10, 25, 35, 20, 10],   // Score 10000–15000:  Warming up (gradual intro of harder)
+  [15, 20, 30, 25, 10],   // Score 15000–20000:  Mid-game
+  [10, 15, 25, 30, 20],   // Score 20000–30000:  Sweat
+  [ 5, 10, 20, 35, 30],   // Score 30000+:       Survival
 ];
 
 const TIERS: readonly DifficultyTier[] = [1, 2, 3, 4, 5];
@@ -28,10 +28,10 @@ export function calculateDifficultyScore(state: GameState): number {
 }
 
 function getDifficultyBracket(score: number): number {
-  if (score < 5000) return 0;
-  if (score < 10000) return 1;
-  if (score < 15000) return 2;
-  if (score < 25000) return 3;
+  if (score < 10000) return 0;
+  if (score < 15000) return 1;
+  if (score < 20000) return 2;
+  if (score < 30000) return 3;
   return 4;
 }
 
@@ -97,27 +97,62 @@ function getHelpfulShape(grid: Grid): ShapeDefinition | null {
 }
 
 /**
- * Apply mercy algorithm: ensure at least 1 piece can be placed.
- * If none fit, swap the smallest piece for a Tier 1 shape that fits.
+ * Ensure at least 2 out of 3 pieces can fit on the board.
+ * Re-rolls any unfittable piece (up to MAX_REROLLS attempts) to find one that fits.
+ * If the board is so full that we can't get 2 fittable pieces, we return what we have
+ * and game over will trigger naturally.
  */
-function applyMercy(grid: Grid, pieces: GamePiece[]): GamePiece[] {
-  const anyFits = pieces.some((p) => canPieceFit(grid, p.shape));
-  if (anyFits) return pieces;
+const MAX_REROLLS = 10;
 
-  // Find a Tier 1 shape that fits
-  const easyShapes = SHAPES_BY_TIER[1];
-  for (const shape of easyShapes) {
-    if (canPieceFit(grid, shape)) {
-      const updated = [...pieces];
-      updated[0] = { shape, color: pickRandomColor(), isPlaced: false };
-      return updated;
+function ensureMinFittable(
+  grid: Grid,
+  pieces: GamePiece[],
+  score: number,
+  minFit: number,
+): GamePiece[] {
+  const result = [...pieces];
+
+  // Count how many currently fit
+  let fittable = result.filter((p) => canPieceFit(grid, p.shape)).length;
+  if (fittable >= minFit) return result;
+
+  // Re-roll unfittable pieces one by one until we hit the target
+  for (let i = 0; i < result.length && fittable < minFit; i++) {
+    if (canPieceFit(grid, result[i]!.shape)) continue;
+
+    // This piece doesn't fit — try re-rolling it
+    for (let attempt = 0; attempt < MAX_REROLLS; attempt++) {
+      const newShape = pickWeightedShape(score);
+      if (canPieceFit(grid, newShape)) {
+        result[i] = { shape: newShape, color: pickRandomColor(), isPlaced: false };
+        fittable++;
+        break;
+      }
+    }
+
+    // If re-rolling with weighted shapes failed, try any shape from all tiers
+    if (!canPieceFit(grid, result[i]!.shape)) {
+      for (const tier of [2, 3, 1, 4, 5] as const) {
+        const shapes = SHAPES_BY_TIER[tier];
+        const shuffled = [...shapes].sort(() => Math.random() - 0.5);
+        let found = false;
+        for (const shape of shuffled) {
+          if (canPieceFit(grid, shape)) {
+            result[i] = { shape, color: pickRandomColor(), isPlaced: false };
+            fittable++;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
     }
   }
 
-  return pieces;
+  return result;
 }
 
-/** Generate a set of 3 pieces based on difficulty, with mercy check and beginner help. */
+/** Generate a set of 3 pieces based on difficulty, guaranteeing at least 2 can fit. */
 export function generatePieceSet(grid: Grid, score: number): GamePiece[] {
   const pieces: GamePiece[] = Array.from({ length: 3 }, () => ({
     shape: pickWeightedShape(score),
@@ -135,5 +170,45 @@ export function generatePieceSet(grid: Grid, score: number): GamePiece[] {
     }
   }
 
-  return applyMercy(grid, pieces);
+  // Guarantee at least 2 out of 3 pieces can fit on the board
+  return ensureMinFittable(grid, pieces, score, 2);
+}
+
+/**
+ * Rescue pass: only triggers when ZERO remaining pieces can fit (game would end).
+ * Swaps exactly ONE unfittable piece for a shape that fits, preferring
+ * larger/harder shapes first so we don't just hand out dots.
+ */
+export function rescueUnfittablePieces(
+  grid: Grid,
+  pieces: GamePiece[],
+  _score: number,
+): GamePiece[] {
+  // Check: can ANY remaining piece still fit?
+  const anyFits = pieces.some((p) => !p.isPlaced && canPieceFit(grid, p.shape));
+
+  // If at least one piece fits, don't touch anything — game can continue
+  if (anyFits) return pieces;
+
+  // None of the remaining pieces fit → swap exactly ONE for something that does
+  const result = [...pieces];
+
+  // Find the first unplaced piece to swap
+  const swapIndex = result.findIndex((p) => !p.isPlaced);
+  if (swapIndex === -1) return pieces;
+
+  // Try larger shapes first (tier 3 → 2 → 1) to avoid cheap dots
+  for (const tier of [3, 2, 1, 4, 5] as const) {
+    const shapes = SHAPES_BY_TIER[tier];
+    const shuffled = [...shapes].sort(() => Math.random() - 0.5);
+    for (const shape of shuffled) {
+      if (canPieceFit(grid, shape)) {
+        result[swapIndex] = { shape, color: pickRandomColor(), isPlaced: false };
+        return result;
+      }
+    }
+  }
+
+  // Truly nothing fits → board is full, game over will trigger naturally
+  return pieces;
 }
