@@ -65,9 +65,13 @@ const CORNER_BIG = shape("corner_big", "Corner Big", 5, ["XXX", "X..", "X.."]);
 /** All shape definitions grouped by tier. */
 export const SHAPES_BY_TIER: Record<DifficultyTier, readonly ShapeDefinition[]> = {
   1: [DOT, LINE_2H, LINE_2V],
-  2: [LINE_3H, LINE_3V, SQUARE_2, L_SM_1, L_SM_2, L_SM_3, L_SM_4],
-  3: [LINE_4H, LINE_4V, T_UP, T_DOWN, T_LEFT, T_RIGHT, RECT_2X3, RECT_3X2, SQUARE_3],
-  4: [LINE_5H, LINE_5V, L_BIG_1, L_BIG_2, L_BIG_3, L_BIG_4],
+  2: [
+    LINE_3H, LINE_3V, 
+    SQUARE_2, SQUARE_2, SQUARE_2, // Tripled weight to make 2x2 frequent
+    L_SM_1, L_SM_2, L_SM_3, L_SM_4
+  ],
+  3: [LINE_4H, LINE_4V, T_UP, T_DOWN, T_LEFT, T_RIGHT, RECT_2X3, RECT_3X2],
+  4: [LINE_5H, LINE_5V, L_BIG_1, L_BIG_2, L_BIG_3, L_BIG_4, SQUARE_3],
   5: [S_SHAPE, Z_SHAPE, CROSS, CORNER_BIG],
 };
 

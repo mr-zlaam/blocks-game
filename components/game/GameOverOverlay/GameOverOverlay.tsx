@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 
 import { playSound } from "@/lib/audio";
 import { useGame } from "@/contexts/GameContext";
+import { BouncyButton } from "@/components/ui/BouncyButton";
 
 /**
  * Game over overlay — full-screen, covers the board.
@@ -22,7 +22,7 @@ export default function GameOverOverlay() {
       const timer = setTimeout(() => {
         setPhase("result");
         void playSound("gameover");
-      }, 2000);
+      }, 2800);
       return () => clearTimeout(timer);
     } else {
       setPhase("hidden");
@@ -72,19 +72,19 @@ export default function GameOverOverlay() {
           {state.highScore}
         </Text>
 
-        <Pressable
+        <BouncyButton
+          haptic="Medium"
           onPress={() => {
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             dispatch({ type: "NEW_GAME" });
           }}
-          className="w-48 h-16 bg-primary flex-row justify-center items-center rounded-game-xl active:scale-95"
+          className="w-48 h-16 bg-primary flex-row justify-center items-center rounded-game-xl"
           style={{
             borderBottomWidth: 4,
             borderBottomColor: "#4A3DB8", // primary-dark
           }}
         >
           <Ionicons name="play" size={36} color="white" style={{ marginLeft: 6 }} />
-        </Pressable>
+        </BouncyButton>
       </View>
     </View>
   );
