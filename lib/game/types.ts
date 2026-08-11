@@ -72,4 +72,5 @@ export type GameAction =
   | { type: "SELECT_PIECE"; index: number }
   | { type: "PLACE_PIECE"; row: number; col: number; pieceIndex: number }
   | { type: "RESTORE_HIGH_SCORE"; highScore: number }
+  | { type: "RESTORE_GAME_STATE"; state: GameState }
   | { type: "NEW_GAME" };

@@ -44,15 +44,19 @@ def generate_clear():
     sr = 44100
     duration = 0.5
     samples = []
+    # Congratulatory A major arpeggio
+    notes = [440.0, 554.37, 659.25, 880.0]
     for i in range(int(sr * duration)):
         t = i / sr
-        # Nice bell-like chime (synth)
-        f1 = 523.25 # C5
-        f2 = 659.25 # E5
-        f3 = 783.99 # G5
-        env = math.exp(-t * 6)
-        val = (math.sin(2*math.pi*f1*t) + math.sin(2*math.pi*f2*t) + math.sin(2*math.pi*f3*t))/3
-        samples.append(val * env * 0.6)
+        val = 0
+        for idx, freq in enumerate(notes):
+            start_t = idx * 0.08
+            if t > start_t:
+                env = math.exp(-(t - start_t) * 8)
+                # FM synthesis for bell-like tone
+                mod = math.sin(2 * math.pi * freq * 2 * (t - start_t)) * 0.5
+                val += math.sin(2 * math.pi * freq * (t - start_t) + mod) * env * 0.3
+        samples.append(val * 0.8)
     write_wav('assets/sounds/clear.wav', samples)
 
 generate_whoosh()

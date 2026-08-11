@@ -59,6 +59,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "RESTORE_HIGH_SCORE":
       return { ...state, highScore: Math.max(state.highScore, action.highScore) };
 
+    case "RESTORE_GAME_STATE":
+      return { ...action.state, highScore: Math.max(state.highScore, action.state.highScore) };
+
     default:
       return state;
   }

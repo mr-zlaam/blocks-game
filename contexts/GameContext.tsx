@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { gameReducer, INITIAL_STATE } from "./gameReducer";
-import { loadHighScore, saveHighScore } from "@/lib/storage";
+import { loadHighScore, saveHighScore, loadGameState, saveGameState } from "@/lib/storage";
 
 import type { GameState, GameAction, BlockColor } from "@/lib/game";
 
@@ -48,33 +48,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_STATE);
   const boardLayoutRef = useRef<BoardLayout | null>(null);
   const [hoverState, setHoverStateRaw] = useState<HoverState | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const setHoverState = useCallback((hover: HoverState | null) => {
     setHoverStateRaw(hover);
   }, []);
 
-  // Load persisted high score on mount
+  // Load persisted game state (or just high score) on mount
   useEffect(() => {
-    void loadHighScore().then((saved) => {
-      if (saved > 0) {
-        dispatch({ type: "RESTORE_HIGH_SCORE", highScore: saved });
+    void loadGameState().then((savedState) => {
+      if (savedState) {
+        dispatch({ type: "RESTORE_GAME_STATE", state: savedState });
+      } else {
+        void loadHighScore().then((saved) => {
+          if (saved > 0) {
+            dispatch({ type: "RESTORE_HIGH_SCORE", highScore: saved });
+          }
+          dispatch({ type: "START_GAME" });
+        });
       }
+      setIsLoaded(true);
     });
   }, []);
 
-  // Start game after mount
+  // Persist game state whenever it changes
   useEffect(() => {
-    if (state.pieces.length === 0) {
-      dispatch({ type: "START_GAME" });
+    if (isLoaded && state.pieces.length > 0) {
+      void saveGameState(state);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Persist high score whenever it changes
-  useEffect(() => {
-    if (state.highScore > 0) {
+    // Also save high score separately so it survives even if game state is wiped
+    if (isLoaded && state.highScore > 0) {
       void saveHighScore(state.highScore);
     }
-  }, [state.highScore]);
+  }, [state, isLoaded]);
+
+  if (!isLoaded) return null;
 
   return (
     <GameContext.Provider
