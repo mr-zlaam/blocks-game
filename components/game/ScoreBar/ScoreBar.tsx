@@ -11,9 +11,9 @@ export default function ScoreBar() {
   const showCombo = state.combo > 0;
 
   return (
-    <View className="flex-row items-center justify-between px-4 py-3">
+    <View className="flex-row items-center px-4 py-3" style={{ height: 80 }}>
       {/* Score */}
-      <View className="items-center">
+      <View className="flex-1 items-start">
         <Text className="text-text-muted text-xs uppercase tracking-widest">
           Score
         </Text>
@@ -25,21 +25,21 @@ export default function ScoreBar() {
       </View>
 
       {/* Combo */}
-      {showCombo ? (
-        <View className="items-center bg-primary/20 px-4 py-2 rounded-game">
-          <Text className="text-primary-light text-xs font-bold uppercase">
-            Combo
-          </Text>
-          <Text className="text-primary-light text-xl font-bold">
-            ×{multiplier.toFixed(1)}
-          </Text>
-        </View>
-      ) : (
-        <View />
-      )}
+      <View className="flex-1 items-center justify-center">
+        {showCombo && (
+          <View className="items-center bg-primary/20 px-4 py-2 rounded-game">
+            <Text className="text-primary-light text-xs font-bold uppercase">
+              Combo
+            </Text>
+            <Text className="text-primary-light text-xl font-bold">
+              ×{multiplier.toFixed(1)}
+            </Text>
+          </View>
+        )}
+      </View>
 
       {/* High Score */}
-      <View className="items-center">
+      <View className="flex-1 items-end">
         <Text className="text-text-muted text-xs uppercase tracking-widest">
           Best
         </Text>

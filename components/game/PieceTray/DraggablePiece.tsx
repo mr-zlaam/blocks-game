@@ -10,7 +10,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 
 import { BlockShape } from "@/components/game/BlockShape";
-import { GRID_SIZE, canPlaceShape, placeShape, findCompletedLines } from "@/lib/game";
+import { canPlaceShape, placeShape, findCompletedLines } from "@/lib/game";
 import { useGame } from "@/contexts/GameContext";
 
 import type { GamePiece } from "@/lib/game";
@@ -77,7 +77,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     [],
   );
 
-  /** Compute grid position from piece's ACTUAL visual center (not finger). */
+  /** Compute grid position & exact continuous offsets from piece's ACTUAL visual center. */
   const toGridPos = useCallback(
     (absX: number, absY: number) => {
       const layout = boardLayoutRef.current;
@@ -91,40 +91,84 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       const pieceCX = absX + offsetRef.current.x;
       const pieceCY = absY + offsetRef.current.y + FINGER_OFFSET_Y;
 
-      const col = Math.round((pieceCX - layout.x) / step - shapeW / 2);
-      const row = Math.round((pieceCY - layout.y) / step - shapeH / 2);
+      const exactCol = (pieceCX - layout.x) / step - shapeW / 2;
+      const exactRow = (pieceCY - layout.y) / step - shapeH / 2;
 
-      return { row, col };
+      const col = Math.round(exactCol);
+      const row = Math.round(exactRow);
+
+      return { row, col, exactRow, exactCol };
     },
     [boardLayoutRef, piece.shape],
   );
 
-  const handleMove = useCallback(
+  /** Magnetic snap search: finds the closest valid placement slot within a magnetic radius. */
+  const findNearestValidPos = useCallback(
     (absX: number, absY: number) => {
       const pos = toGridPos(absX, absY);
-      if (!pos) return;
+      if (!pos) return null;
 
-      const key = `${pos.row},${pos.col}`;
+      const { row, col, exactRow, exactCol } = pos;
+
+      // 1. Direct match check
+      if (canPlaceShape(state.grid, piece.shape, row, col)) {
+        return { row, col };
+      }
+
+      // 2. Magnetic search in ±1 cell radius (3x3 neighborhood)
+      let bestSlot: { row: number; col: number } | null = null;
+      let minDistanceSq = 2.5; // Max snap radius (~1.5 cells)
+
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const r = row + dr;
+          const c = col + dc;
+
+          if (canPlaceShape(state.grid, piece.shape, r, c)) {
+            const distSq = (r - exactRow) ** 2 + (c - exactCol) ** 2;
+            if (distSq < minDistanceSq) {
+              minDistanceSq = distSq;
+              bestSlot = { row: r, col: c };
+            }
+          }
+        }
+      }
+
+      return bestSlot;
+    },
+    [toGridPos, state.grid, piece.shape],
+  );
+
+  const handleMove = useCallback(
+    (absX: number, absY: number) => {
+      const target = findNearestValidPos(absX, absY);
+      if (!target) {
+        if (lastHoverRef.current !== "") {
+          lastHoverRef.current = "";
+          setHoverState(null);
+        }
+        return;
+      }
+
+      const key = `${target.row},${target.col}`;
       if (key === lastHoverRef.current) return;
       lastHoverRef.current = key;
 
-      const isValid = canPlaceShape(state.grid, piece.shape, pos.row, pos.col);
-      if (isValid) {
-        // Check if this placement would complete any lines
-        const tempGrid = placeShape(state.grid, piece.shape, piece.color, pos.row, pos.col);
-        const completed = findCompletedLines(tempGrid);
-        const wouldScore = completed.rows.length + completed.cols.length > 0;
+      const tempGrid = placeShape(state.grid, piece.shape, piece.color, target.row, target.col);
+      const completed = findCompletedLines(tempGrid);
+      const wouldScore = completed.rows.length + completed.cols.length > 0;
 
-        setHoverState({
-          row: pos.row, col: pos.col, isValid: true, wouldScore,
-          shapeGrid: piece.shape.grid,
-          color: piece.color,
-        });
-      } else {
-        setHoverState(null);
-      }
+      setHoverState({
+        row: target.row,
+        col: target.col,
+        isValid: true,
+        wouldScore,
+        shapeGrid: piece.shape.grid,
+        color: piece.color,
+      });
     },
-    [toGridPos, state.grid, piece.shape, piece.color, setHoverState],
+    [findNearestValidPos, state.grid, piece.shape, piece.color, setHoverState],
   );
 
   const handleDrop = useCallback(
@@ -132,36 +176,17 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       setHoverState(null);
       lastHoverRef.current = "";
 
-      const pos = toGridPos(absX, absY);
-      if (!pos) {
-        // No grid position — spring back
-        resetToTray();
+      const target = findNearestValidPos(absX, absY);
+      if (target) {
+        dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         return;
-      }
-
-      // Auto-snap: try exact, then clamped
-      const cRow = Math.max(0, Math.min(GRID_SIZE - 1, pos.row));
-      const cCol = Math.max(0, Math.min(GRID_SIZE - 1, pos.col));
-      const tries = [
-        pos,
-        { row: cRow, col: cCol },
-        { row: cRow, col: pos.col },
-        { row: pos.row, col: cCol },
-      ];
-
-      for (const t of tries) {
-        if (canPlaceShape(state.grid, piece.shape, t.row, t.col)) {
-          // Success: dispatch immediately — piece will re-render as placed
-          dispatch({ type: "PLACE_PIECE", row: t.row, col: t.col, pieceIndex: index });
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          return;
-        }
       }
 
       // No valid position — spring back
       resetToTray();
     },
-    [toGridPos, state.grid, piece.shape, dispatch, index, setHoverState, resetToTray],
+    [findNearestValidPos, dispatch, index, setHoverState, resetToTray],
   );
 
   const panGesture = Gesture.Pan()

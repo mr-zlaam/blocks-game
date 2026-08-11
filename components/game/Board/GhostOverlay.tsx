@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
   useSharedValue,
@@ -26,17 +27,20 @@ export default function GhostOverlay({ cellSize, cellGap }: GhostOverlayProps) {
 
   // Pulse animation when wouldScore
   const wouldScore = hoverState?.wouldScore ?? false;
-  if (wouldScore) {
-    pulseOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.6, { duration: 300 }),
-        withTiming(0.25, { duration: 300 }),
-      ),
-      -1, true,
-    );
-  } else {
-    pulseOpacity.value = 0.35;
-  }
+  
+  useEffect(() => {
+    if (wouldScore) {
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.6, { duration: 300 }),
+          withTiming(0.25, { duration: 300 }),
+        ),
+        -1, true,
+      );
+    } else {
+      pulseOpacity.value = 0.35;
+    }
+  }, [wouldScore, pulseOpacity]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
