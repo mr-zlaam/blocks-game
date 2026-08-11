@@ -41,7 +41,7 @@
           }
         }
       ],
-      "expo-audio"
+      "expo-av"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -49,7 +49,7 @@ export async function playSound(name: "clear" | "bonus" | "lose" | "gameover") {
   const player = sounds[name];
   if (player) {
     // Rewind and play
-    await player.seekTo(0);
+    player.seekTo(0);
     player.play();
   }
 }
