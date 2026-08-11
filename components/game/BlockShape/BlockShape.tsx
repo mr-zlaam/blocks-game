@@ -13,13 +13,14 @@ export default function BlockShape({
   shape,
   color,
   cellSize = DEFAULT_CELL_SIZE,
+  cellGap = CELL_GAP,
 }: BlockShapeProps) {
   const colorClass = BLOCK_COLOR_CLASSES[color];
 
   return (
-    <View style={{ gap: CELL_GAP }}>
+    <View style={{ gap: cellGap }}>
       {shape.grid.map((row, rowIndex) => (
-        <View key={rowIndex} style={{ flexDirection: "row", gap: CELL_GAP }}>
+        <View key={rowIndex} style={{ flexDirection: "row", gap: cellGap }}>
           {row.map((isFilled, colIndex) => (
             <BlockCell
               key={colIndex}

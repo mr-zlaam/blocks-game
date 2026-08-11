@@ -57,7 +57,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       translateX.value = 0;
       translateY.value = 0;
     }
-  }, [piece.shape.id, piece.isPlaced, scale, translateX, translateY]);
+  }, [piece, scale, translateX, translateY]);
 
   /** Smoothly return piece to its tray position. */
   const resetToTray = useCallback(() => {
@@ -166,6 +166,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
         col: target.col,
         isValid: true,
         wouldScore,
+        completedLines: completed,
         shapeGrid: piece.shape.grid,
         color: piece.color,
       });
@@ -277,7 +278,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     >
       <GestureDetector gesture={panGesture}>
         <Animated.View style={shapeStyle}>
-          <BlockShape shape={piece.shape} color={piece.color} cellSize={TRAY_CELL_SIZE} />
+          <BlockShape shape={piece.shape} color={piece.color} cellSize={TRAY_CELL_SIZE} cellGap={1.5} />
         </Animated.View>
       </GestureDetector>
     </View>

@@ -32,8 +32,8 @@ export default function GhostOverlay({ cellSize, cellGap }: GhostOverlayProps) {
     if (wouldScore) {
       pulseOpacity.value = withRepeat(
         withSequence(
-          withTiming(0.6, { duration: 300 }),
-          withTiming(0.25, { duration: 300 }),
+          withTiming(0.4, { duration: 600 }),
+          withTiming(0.15, { duration: 600 }),
         ),
         -1, true,
       );
@@ -48,10 +48,56 @@ export default function GhostOverlay({ cellSize, cellGap }: GhostOverlayProps) {
 
   if (!hoverState) return null;
 
-  const { row, col, shapeGrid, color } = hoverState;
+  const { row, col, shapeGrid, color, completedLines } = hoverState;
   const step = cellSize + cellGap;
   const colorClass = BLOCK_COLOR_CLASSES[color];
   const cells: React.JSX.Element[] = [];
+  const lineHighlights: React.JSX.Element[] = [];
+
+  // Render full row/col highlights if about to score
+  if (wouldScore && completedLines) {
+    const boardSize = GRID_SIZE * step - cellGap;
+    
+    completedLines.rows.forEach((r) => {
+      lineHighlights.push(
+        <Animated.View
+          key={`row-${r}`}
+          style={[
+            {
+              position: "absolute",
+              left: 0,
+              top: r * step,
+              width: boardSize,
+              height: cellSize,
+              backgroundColor: "white",
+              borderRadius: 6,
+            },
+            pulseStyle,
+          ]}
+        />
+      );
+    });
+
+    completedLines.cols.forEach((c) => {
+      lineHighlights.push(
+        <Animated.View
+          key={`col-${c}`}
+          style={[
+            {
+              position: "absolute",
+              left: c * step,
+              top: 0,
+              width: cellSize,
+              height: boardSize,
+              backgroundColor: "white",
+              borderRadius: 6,
+            },
+            pulseStyle,
+          ]}
+        />
+      );
+    });
+  }
 
   for (let r = 0; r < shapeGrid.length; r++) {
     const shapeRow = shapeGrid[r];
@@ -63,33 +109,24 @@ export default function GhostOverlay({ cellSize, cellGap }: GhostOverlayProps) {
       if (gr < 0 || gr >= GRID_SIZE || gc < 0 || gc >= GRID_SIZE) continue;
 
       cells.push(
-        <Animated.View
+        <View
           key={`${r}-${c}`}
-          className={`${colorClass} rounded-md`}
-          style={[
-            {
-              position: "absolute",
-              left: gc * step,
-              top: gr * step,
-              width: cellSize,
-              height: cellSize,
-            },
-            pulseStyle,
-            wouldScore && {
-              shadowColor: "#fff",
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.5,
-              shadowRadius: 8,
-              elevation: 6,
-            },
-          ]}
+          className={`${colorClass} rounded-md opacity-35`}
+          style={{
+            position: "absolute",
+            left: gc * step,
+            top: gr * step,
+            width: cellSize,
+            height: cellSize,
+          }}
         />,
       );
     }
   }
 
   return (
-    <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+    <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none" }}>
+      {lineHighlights}
       {cells}
     </View>
   );

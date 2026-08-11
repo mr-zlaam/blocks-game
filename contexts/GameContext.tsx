@@ -28,6 +28,7 @@ export interface HoverState {
   col: number;
   isValid: boolean;
   wouldScore: boolean;
+  completedLines?: { rows: number[]; cols: number[] };
   shapeGrid: readonly (readonly boolean[])[];
   color: BlockColor;
 }

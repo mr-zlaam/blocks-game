@@ -8,6 +8,8 @@ export interface BlockShapeProps {
   color: BlockColor;
   /** Size of each cell in pixels. */
   cellSize?: number;
+  /** Gap between cells in pixels. */
+  cellGap?: number;
 }
 
 /** Props for a single BlockCell. */
