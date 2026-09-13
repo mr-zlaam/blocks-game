@@ -19,7 +19,10 @@ import { useGame } from "@/contexts/GameContext";
 import type { GamePiece } from "@/lib/game";
 
 /** Cell size used for pieces in the tray. */
-const TRAY_CELL_SIZE = 22;
+const TRAY_CELL_SIZE = 18;
+
+/** Gap between cells in the tray — must stay proportional to board gap when scaled. */
+const TRAY_CELL_GAP = 1;
 
 /** Y offset — piece floats above finger so you can see it. */
 const FINGER_OFFSET_Y = -250;
@@ -47,7 +50,10 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
   useEffect(() => {
     const layout = boardLayoutRef.current;
     if (layout) {
-      scaleTarget.value = layout.cellSize / TRAY_CELL_SIZE;
+      // Scale by step ratio (cell+gap) so both cells AND gaps match the board exactly
+      const boardStep = layout.cellSize + layout.cellGap;
+      const trayStep = TRAY_CELL_SIZE + TRAY_CELL_GAP;
+      scaleTarget.value = boardStep / trayStep;
     }
   }, [boardLayoutRef, scaleTarget]);
   // Reset shared values when a new piece arrives at this slot
@@ -186,39 +192,11 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
         const completed = findCompletedLines(tempGrid);
         const willScore = completed.rows.length > 0 || completed.cols.length > 0;
 
-        const layout = boardLayoutRef.current;
-        if (layout) {
-          const step = layout.cellSize + layout.cellGap;
-          const shapeH = piece.shape.grid.length;
-          const shapeW = piece.shape.grid[0]?.length ?? 1;
-
-          // Target exact center coords on screen
-          const targetCX = layout.x + (target.col + shapeW / 2) * step;
-          const targetCY = layout.y + (target.row + shapeH / 2) * step;
-
-          // Current piece center coords on screen
-          const currentCX = absX + offsetRef.current.x;
-          const currentCY = absY + offsetRef.current.y + FINGER_OFFSET_Y;
-
-          // Vector distance to glide
-          const diffX = targetCX - currentCX;
-          const diffY = targetCY - currentCY;
-
-          translateX.value = withTiming(translateX.value + diffX, { duration: 100, easing: Easing.out(Easing.quad) });
-          translateY.value = withTiming(translateY.value + diffY, { duration: 100, easing: Easing.out(Easing.quad) }, (finished) => {
-            if (finished) {
-              runOnJS(dispatch)({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
-              // We will just vibrate on placement, and if scoring, play clear
-              runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-              if (willScore) {
-                runOnJS(playSound)("clear");
-              }
-            }
-          });
-        } else {
-          // Fallback if layout ref is missing (should never happen)
-          dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        // Place immediately — no glide animation (prevents snap on low-end devices)
+        dispatch({ type: "PLACE_PIECE", row: target.row, col: target.col, pieceIndex: index });
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        if (willScore) {
+          void playSound("clear");
         }
         return;
       }
@@ -232,17 +210,14 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
       index,
       setHoverState,
       resetToTray,
-      boardLayoutRef,
       piece.shape,
       piece.color,
       state.grid,
-      translateX,
-      translateY,
     ],
   );
 
   const panGesture = Gesture.Pan()
-    .hitSlop({ top: 60, bottom: 60, left: 60, right: 60 })
+    .hitSlop({ top: 30, bottom: 200, left: 25, right: 25 })
     .minDistance(0)
     .onBegin(() => {
       // Just a subtle vibration when touching the piece
@@ -294,7 +269,7 @@ export default function DraggablePiece({ piece, index }: DraggablePieceProps) {
     >
       <GestureDetector gesture={panGesture}>
         <Animated.View style={shapeStyle}>
-          <BlockShape shape={piece.shape} color={piece.color} cellSize={TRAY_CELL_SIZE} cellGap={1.5} />
+          <BlockShape shape={piece.shape} color={piece.color} cellSize={TRAY_CELL_SIZE} cellGap={TRAY_CELL_GAP} />
         </Animated.View>
       </GestureDetector>
     </View>

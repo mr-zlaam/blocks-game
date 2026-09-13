@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
 
 import { useGame } from "@/contexts/GameContext";
 import DraggablePiece from "./DraggablePiece";
@@ -12,12 +12,9 @@ export default function PieceTray() {
   const { state } = useGame();
 
   return (
-    <View className="px-4 mt-4" style={{ overflow: "visible", zIndex: 10 }}>
-      <Text className="text-text-muted text-xs uppercase tracking-widest mb-2 text-center">
-        Drag a piece to the board
-      </Text>
+    <View className="px-4" style={{ overflow: "visible", zIndex: 10, marginTop: 8 }}>
       <View
-        className="flex-row gap-3 rounded-game-lg p-2 items-center"
+        className="flex-row gap-3 rounded-game-lg p-2 items-start pt-3"
         style={{ overflow: "visible", height: 120 }}
       >
         {state.pieces.map((piece, index) => (

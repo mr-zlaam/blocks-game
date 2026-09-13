@@ -35,7 +35,7 @@ export default function Game() {
           <ScoreBar />
 
           {/* Game Board */}
-          <View className="flex-1 justify-center" style={{ transform: [{ translateY: -20 }] }}>
+          <View style={{ transform: [{ translateY: -20 }] }}>
             <Board />
           </View>
 

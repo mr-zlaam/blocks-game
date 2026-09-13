@@ -15,9 +15,16 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0F0E17" }}>
       <StatusBar hidden />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#0F0E17" },
+          animation: "fade",
+          animationDuration: 200,
+        }}
+      />
     </GestureHandlerRootView>
   );
 }
